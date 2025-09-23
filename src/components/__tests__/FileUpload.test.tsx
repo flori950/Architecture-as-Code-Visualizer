@@ -93,13 +93,13 @@ describe('FileUpload', () => {
     // Test drag over
     fireEvent.dragOver(dropArea);
     await waitFor(() => {
-      expect(dropArea).toHaveClass('border-blue-500');
+      expect(dropArea.style.borderColor).toBe('var(--theme-primary)');
     });
 
     // Test drag leave
     fireEvent.dragLeave(dropArea);
     await waitFor(() => {
-      expect(dropArea).not.toHaveClass('border-blue-500');
+      expect(dropArea.style.borderColor).toBe('var(--theme-secondary)');
     });
   });
 

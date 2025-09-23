@@ -39,8 +39,20 @@ Object.defineProperty(window, 'localStorage', {
   value: localStorageMock,
 });
 
+// Mock fetch for Examples component
+Object.defineProperty(window, 'fetch', {
+  value: vi.fn(),
+  writable: true,
+});
+
+// Mock window.alert for Examples component
+Object.defineProperty(window, 'alert', {
+  value: vi.fn(),
+  writable: true,
+});
+
 describe('App Integration', () => {
-  it('should render main components', () => {
+  it('should render main components', async () => {
     render(<App />);
 
     // Check header
@@ -51,7 +63,11 @@ describe('App Integration', () => {
     // Check main sections
     expect(screen.getByText('Upload Configuration')).toBeInTheDocument();
     expect(screen.getByText('Export Options')).toBeInTheDocument();
-    expect(screen.getByText('Diagram Viewer')).toBeInTheDocument();
+
+    // Wait for lazy-loaded DiagramViewer component
+    await waitFor(() => {
+      expect(screen.getByText('Diagram Viewer')).toBeInTheDocument();
+    });
 
     // Check GitHub link
     expect(
@@ -71,16 +87,68 @@ describe('App Integration', () => {
   });
 
   it('should load examples', async () => {
+    // Mock fetch to return example content
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      text: () =>
+        Promise.resolve(`version: '3.8'
+services:
+  web:
+    image: nginx:latest
+    ports:
+      - "80:80"
+  api:
+    image: node:16
+    ports:
+      - "3000:3000"
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_DB: myapp`),
+    } as Response);
+
+    // Replace window.fetch with our mock
+    Object.defineProperty(window, 'fetch', {
+      value: mockFetch,
+      writable: true,
+    });
+
     render(<App />);
 
-    // Find and click the Docker Compose example
-    const dockerExample = screen.getByText('Docker Compose');
-    fireEvent.click(dockerExample);
-
-    // Should show some content in the editor
+    // Wait for the Examples section to load
     await waitFor(() => {
-      expect(screen.getByDisplayValue(/version:/)).toBeInTheDocument();
+      expect(screen.getByText('Example Configurations')).toBeInTheDocument();
     });
+
+    // Find the Docker Compose category section
+    expect(screen.getByText('Docker Compose')).toBeInTheDocument();
+
+    // Find the Web Application Stack example (which is the Docker Compose example)
+    expect(screen.getByText('Web Application Stack')).toBeInTheDocument();
+
+    // Get the textarea before clicking
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    expect(textarea.value).toBe('');
+
+    // Find and click the Load Example button for the Web Application Stack
+    const loadButtons = screen.getAllByText('Load Example');
+    expect(loadButtons.length).toBeGreaterThan(0);
+
+    // Click the first Load Example button (Web Application Stack)
+    fireEvent.click(loadButtons[0]);
+
+    // Wait for content to be loaded into the textarea
+    await waitFor(
+      () => {
+        expect(textarea.value).toBeTruthy();
+        expect(textarea.value).toContain('version:');
+      },
+      { timeout: 3000 }
+    );
+
+    // Verify it's Docker Compose content
+    expect(textarea.value).toContain('services:');
+    expect(textarea.value).toContain('3.8');
   });
 
   it('should show validation errors for invalid content', async () => {
@@ -140,9 +208,14 @@ services:
   it('should handle file upload', async () => {
     render(<App />);
 
+    // Wait for components to load
+    await waitFor(() => {
+      expect(screen.getByText('Upload Configuration')).toBeInTheDocument();
+    });
+
     const fileInput = screen
-      .getByLabelText(/drag and drop/i)
-      .closest('input[type="file"]');
+      .getByRole('button', { name: /upload file area/i })
+      .querySelector('input[type="file"]');
 
     if (fileInput) {
       const file = new File(

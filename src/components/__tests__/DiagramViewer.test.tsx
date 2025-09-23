@@ -259,7 +259,7 @@ describe('DiagramViewer', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/Click pan mode to navigate/)
+        screen.getByText(/Enable pan mode to navigate/)
       ).toBeInTheDocument();
     });
   });

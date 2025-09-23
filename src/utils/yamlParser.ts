@@ -147,85 +147,87 @@ const parseHCLToJSON = (hclContent: string): Record<string, unknown> => {
   }
 
   // Extract resources
-  const resourceMatches = hclContent.match(
-    /resource\s+"([^"]+)"\s+"([^"]+)"\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\}/g
-  );
-  if (resourceMatches) {
+  const resourceRegex =
+    /resource\s+"([^"]+)"\s+"([^"]+)"\s*\{([\s\S]*?)\}(?=\s*(?:resource|data|variable|provider|output|$))/g;
+  const resourceMatches = [...hclContent.matchAll(resourceRegex)];
+  if (resourceMatches.length > 0) {
     result.resource = {};
     resourceMatches.forEach(match => {
-      const resourceMatch = match.match(
-        /resource\s+"([^"]+)"\s+"([^"]+)"\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\}/
-      );
-      if (resourceMatch) {
-        const resourceType = resourceMatch[1];
-        const resourceName = resourceMatch[2];
-        const resourceBody = resourceMatch[3];
+      const resourceType = match[1];
+      const resourceName = match[2];
+      const resourceBody = match[3];
 
-        if (!(result.resource as Record<string, unknown>)[resourceType]) {
-          (result.resource as Record<string, unknown>)[resourceType] = {};
-        }
-
-        // Parse basic attributes
-        const attributes: Record<string, unknown> = {};
-
-        // Extract simple key-value pairs
-        const attributeMatches = resourceBody.match(
-          /^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*"([^"]*)"/gm
-        );
-        if (attributeMatches) {
-          attributeMatches.forEach(attrMatch => {
-            const attrParts = attrMatch.match(
-              /^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*"([^"]*)"/
-            );
-            if (attrParts) {
-              attributes[attrParts[1]] = attrParts[2];
-            }
-          });
-        }
-
-        // Extract references to other resources
-        const referenceMatches = resourceBody.match(
-          /^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*([a-zA-Z_][a-zA-Z0-9_.]*)/gm
-        );
-        if (referenceMatches) {
-          referenceMatches.forEach(refMatch => {
-            const refParts = refMatch.match(
-              /^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*([a-zA-Z_][a-zA-Z0-9_.]*)/
-            );
-            if (refParts && refParts[2].includes('.')) {
-              attributes[refParts[1]] = refParts[2];
-            }
-          });
-        }
-
-        // Extract tags blocks
-        const tagsMatch = resourceBody.match(/tags\s*=\s*\{([^}]*)\}/);
-        if (tagsMatch) {
-          const tagsContent = tagsMatch[1];
-          const tagMatches = tagsContent.match(
-            /([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*"([^"]*)"/g
-          );
-          if (tagMatches) {
-            attributes.tags = {};
-            tagMatches.forEach(tagMatch => {
-              const tagParts = tagMatch.match(
-                /([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*"([^"]*)"/
-              );
-              if (tagParts) {
-                (attributes.tags as Record<string, unknown>)[tagParts[1]] =
-                  tagParts[2];
-              }
-            });
-          }
-        }
-
-        (
-          (result.resource as Record<string, unknown>)[resourceType] as Record<
-            string,
-            unknown
-          >
-        )[resourceName] = attributes;
+      if (!(result.resource as Record<string, unknown>)[resourceType]) {
+        (result.resource as Record<string, unknown>)[resourceType] = {};
       }
+
+      // Parse basic attributes
+      const attributes: Record<string, unknown> = {};
+
+      // Extract tags blocks first
+      const tagsMatch = resourceBody.match(/tags\s*=\s*\{([^}]*)\}/);
+      if (tagsMatch) {
+        const tagsContent = tagsMatch[1];
+        // Match both quoted and unquoted values in tags
+        const tagMatches = tagsContent.match(
+          /([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*("([^"]*)"|([a-zA-Z_][a-zA-Z0-9_]*))/g
+        );
+        if (tagMatches) {
+          attributes.tags = {};
+          tagMatches.forEach(tagMatch => {
+            const tagParts = tagMatch.match(
+              /([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*("([^"]*)"|([a-zA-Z_][a-zA-Z0-9_]*))/
+            );
+            if (tagParts) {
+              // Use the captured group from either quoted (index 3) or unquoted (index 4) value
+              const value = tagParts[3] || tagParts[4];
+              (attributes.tags as Record<string, unknown>)[tagParts[1]] = value;
+            }
+          });
+        }
+      }
+
+      // Extract simple key-value pairs (excluding those inside tags blocks)
+      let cleanedResourceBody = resourceBody;
+      if (tagsMatch) {
+        // Remove tags block from body to avoid duplicate parsing
+        cleanedResourceBody = resourceBody.replace(/tags\s*=\s*\{[^}]*\}/, '');
+      }
+      const attributeMatches = cleanedResourceBody.match(
+        /^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*"([^"]*)"/gm
+      );
+      if (attributeMatches) {
+        attributeMatches.forEach(attrMatch => {
+          const attrParts = attrMatch.match(
+            /^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*"([^"]*)"/
+          );
+          if (attrParts) {
+            attributes[attrParts[1]] = attrParts[2];
+          }
+        });
+      }
+
+      // Extract references to other resources
+      const referenceMatches = cleanedResourceBody.match(
+        /^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*([a-zA-Z_][a-zA-Z0-9_.]*)/gm
+      );
+      if (referenceMatches) {
+        referenceMatches.forEach(refMatch => {
+          const refParts = refMatch.match(
+            /^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*([a-zA-Z_][a-zA-Z0-9_.]*)/
+          );
+          if (refParts && refParts[2].includes('.')) {
+            attributes[refParts[1]] = refParts[2];
+          }
+        });
+      }
+
+      (
+        (result.resource as Record<string, unknown>)[resourceType] as Record<
+          string,
+          unknown
+        >
+      )[resourceName] = attributes;
     });
   }
 
