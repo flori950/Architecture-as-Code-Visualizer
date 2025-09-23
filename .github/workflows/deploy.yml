@@ -197,7 +197,7 @@ jobs:
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
         local-dir: ./deploy/
-        server-dir: ${{ secrets.FTP_SERVER_DIR || '/public_html/' }}
+        server-dir: /aac/
         exclude: |
           **/.git*
           **/.git*/**
@@ -295,7 +295,7 @@ jobs:
         username: ${{ secrets.STAGING_FTP_USERNAME || secrets.FTP_USERNAME }}
         password: ${{ secrets.STAGING_FTP_PASSWORD || secrets.FTP_PASSWORD }}
         local-dir: ./deploy/
-        server-dir: ${{ secrets.STAGING_FTP_SERVER_DIR || '/staging/' }}
+        server-dir: /aac-staging/
         exclude: |
           **/.git*
           **/.git*/**
