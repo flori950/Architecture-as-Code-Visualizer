@@ -1,0 +1,209 @@
+{
+  "name": "ibm-cloud-infrastructure",
+  "description": "IBM Cloud infrastructure with VPC, VSI, and Load Balancer",
+  "variables": {
+    "region": "us-south",
+    "zone": "us-south-1",
+    "resource_group": "default",
+    "ssh_key_name": "my-ssh-key"
+  },
+  "resources": [
+    {
+      "name": "vpc",
+      "type": "ibm_is_vpc",
+      "properties": {
+        "name": "my-vpc",
+        "resource_group": "${var.resource_group}",
+        "address_prefix_management": "auto",
+        "tags": ["environment:production", "team:devops"]
+      }
+    },
+    {
+      "name": "subnet",
+      "type": "ibm_is_subnet",
+      "properties": {
+        "name": "my-subnet",
+        "vpc": "${ibm_is_vpc.vpc.id}",
+        "zone": "${var.zone}",
+        "total_ipv4_address_count": 256,
+        "resource_group": "${var.resource_group}"
+      }
+    },
+    {
+      "name": "security_group",
+      "type": "ibm_is_security_group",
+      "properties": {
+        "name": "my-security-group",
+        "vpc": "${ibm_is_vpc.vpc.id}",
+        "resource_group": "${var.resource_group}"
+      }
+    },
+    {
+      "name": "security_group_rule_ssh",
+      "type": "ibm_is_security_group_rule",
+      "properties": {
+        "group": "${ibm_is_security_group.security_group.id}",
+        "direction": "inbound",
+        "remote": "0.0.0.0/0",
+        "tcp": {
+          "port_min": 22,
+          "port_max": 22
+        }
+      }
+    },
+    {
+      "name": "security_group_rule_http",
+      "type": "ibm_is_security_group_rule",
+      "properties": {
+        "group": "${ibm_is_security_group.security_group.id}",
+        "direction": "inbound",
+        "remote": "0.0.0.0/0",
+        "tcp": {
+          "port_min": 80,
+          "port_max": 80
+        }
+      }
+    },
+    {
+      "name": "security_group_rule_https",
+      "type": "ibm_is_security_group_rule",
+      "properties": {
+        "group": "${ibm_is_security_group.security_group.id}",
+        "direction": "inbound",
+        "remote": "0.0.0.0/0",
+        "tcp": {
+          "port_min": 443,
+          "port_max": 443
+        }
+      }
+    },
+    {
+      "name": "floating_ip",
+      "type": "ibm_is_floating_ip",
+      "properties": {
+        "name": "my-floating-ip",
+        "target": "${ibm_is_instance.web_server.primary_network_interface[0].id}",
+        "resource_group": "${var.resource_group}"
+      }
+    },
+    {
+      "name": "web_server",
+      "type": "ibm_is_instance",
+      "properties": {
+        "name": "web-server",
+        "image": "r006-14140f94-fcc4-11e9-96e7-a72723715315",
+        "profile": "bx2-2x8",
+        "resource_group": "${var.resource_group}",
+        "vpc": "${ibm_is_vpc.vpc.id}",
+        "zone": "${var.zone}",
+        "keys": ["${data.ibm_is_ssh_key.ssh_key.id}"],
+        "primary_network_interface": {
+          "subnet": "${ibm_is_subnet.subnet.id}",
+          "security_groups": ["${ibm_is_security_group.security_group.id}"]
+        },
+        "user_data": "#!/bin/bash\napt update\napt install -y nginx\nsystemctl start nginx\nsystemctl enable nginx"
+      }
+    },
+    {
+      "name": "load_balancer",
+      "type": "ibm_is_lb",
+      "properties": {
+        "name": "my-load-balancer",
+        "type": "public",
+        "subnets": ["${ibm_is_subnet.subnet.id}"],
+        "resource_group": "${var.resource_group}",
+        "tags": ["environment:production"]
+      }
+    },
+    {
+      "name": "lb_pool",
+      "type": "ibm_is_lb_pool",
+      "properties": {
+        "name": "my-lb-pool",
+        "lb": "${ibm_is_lb.load_balancer.id}",
+        "algorithm": "round_robin",
+        "protocol": "http",
+        "health_delay": 60,
+        "health_retries": 5,
+        "health_timeout": 30,
+        "health_type": "http",
+        "health_monitor_url": "/health"
+      }
+    },
+    {
+      "name": "lb_pool_member",
+      "type": "ibm_is_lb_pool_member",
+      "properties": {
+        "lb": "${ibm_is_lb.load_balancer.id}",
+        "pool": "${ibm_is_lb_pool.lb_pool.pool_id}",
+        "port": 80,
+        "target_address": "${ibm_is_instance.web_server.primary_network_interface[0].primary_ipv4_address}"
+      }
+    },
+    {
+      "name": "lb_listener",
+      "type": "ibm_is_lb_listener",
+      "properties": {
+        "lb": "${ibm_is_lb.load_balancer.id}",
+        "port": 80,
+        "protocol": "http",
+        "default_pool": "${ibm_is_lb_pool.lb_pool.pool_id}"
+      }
+    },
+    {
+      "name": "cos_instance",
+      "type": "ibm_resource_instance",
+      "properties": {
+        "name": "my-cos-instance",
+        "service": "cloud-object-storage",
+        "plan": "standard",
+        "location": "global",
+        "resource_group_id": "${data.ibm_resource_group.group.id}"
+      }
+    },
+    {
+      "name": "cos_bucket",
+      "type": "ibm_cos_bucket",
+      "properties": {
+        "bucket_name": "my-storage-bucket",
+        "resource_instance_id": "${ibm_resource_instance.cos_instance.id}",
+        "region_location": "${var.region}",
+        "storage_class": "standard"
+      }
+    }
+  ],
+  "data_sources": [
+    {
+      "name": "ssh_key",
+      "type": "ibm_is_ssh_key",
+      "properties": {
+        "name": "${var.ssh_key_name}"
+      }
+    },
+    {
+      "name": "resource_group",
+      "type": "ibm_resource_group",
+      "properties": {
+        "name": "${var.resource_group}"
+      }
+    }
+  ],
+  "outputs": {
+    "vpc_id": {
+      "value": "${ibm_is_vpc.vpc.id}",
+      "description": "ID of the VPC"
+    },
+    "floating_ip": {
+      "value": "${ibm_is_floating_ip.floating_ip.address}",
+      "description": "Floating IP address"
+    },
+    "load_balancer_hostname": {
+      "value": "${ibm_is_lb.load_balancer.hostname}",
+      "description": "Load balancer hostname"
+    },
+    "cos_bucket_name": {
+      "value": "${ibm_cos_bucket.cos_bucket.bucket_name}",
+      "description": "COS bucket name"
+    }
+  }
+}

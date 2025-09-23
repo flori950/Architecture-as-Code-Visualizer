@@ -1,0 +1,161 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: system-ui, sans-serif;
+    min-height: 100vh;
+  }
+
+  body {
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  #root {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Default theme */
+  :root {
+    --theme-primary: #0ea5e9;
+    --theme-secondary: #64748b;
+    --theme-background: #ffffff;
+    --theme-accent: #06b6d4;
+    --theme-text: #1e293b;
+  }
+
+  /* Dark theme */
+  .dark {
+    --theme-primary: #3b82f6;
+    --theme-secondary: #6b7280;
+    --theme-background: #1f2937;
+    --theme-accent: #10b981;
+    --theme-text: #f3f4f6;
+  }
+
+  /* Forest theme */
+  .theme-forest {
+    --theme-primary: #22c55e;
+    --theme-secondary: #16a34a;
+    --theme-background: #f0fdf4;
+    --theme-accent: #059669;
+    --theme-text: #14532d;
+  }
+
+  /* Neutral theme */
+  .theme-neutral {
+    --theme-primary: #525252;
+    --theme-secondary: #737373;
+    --theme-background: #fafafa;
+    --theme-accent: #404040;
+    --theme-text: #171717;
+  }
+
+  /* Base theme */
+  .theme-base {
+    --theme-primary: #dc2626;
+    --theme-secondary: #991b1b;
+    --theme-background: #fef2f2;
+    --theme-accent: #ea580c;
+    --theme-text: #7f1d1d;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+    background-color: var(--theme-primary);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    filter: brightness(0.9);
+  }
+
+  .btn-primary:focus {
+    box-shadow: 0 0 0 2px var(--theme-primary);
+  }
+
+  .btn-secondary {
+    @apply font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+    background-color: var(--theme-secondary);
+    color: white;
+  }
+
+  .btn-secondary:hover {
+    filter: brightness(0.9);
+  }
+
+  .btn-secondary:focus {
+    box-shadow: 0 0 0 2px var(--theme-secondary);
+  }
+
+  .card {
+    background-color: var(--theme-background);
+    @apply rounded-lg shadow-md border;
+    border-color: var(--theme-secondary);
+    color: var(--theme-text);
+  }
+
+  .input-field {
+    @apply w-full px-3 py-2 rounded-md shadow-sm focus:outline-none focus:ring-2 transition-colors duration-200;
+    background-color: var(--theme-background);
+    border: 1px solid var(--theme-secondary);
+    color: var(--theme-text);
+  }
+
+  .input-field:focus {
+    border-color: var(--theme-primary);
+    box-shadow: 0 0 0 2px rgba(var(--theme-primary), 0.2);
+  }
+
+  /* Theme-aware backgrounds */
+  .bg-theme-background {
+    background-color: var(--theme-background);
+  }
+
+  .text-theme-text {
+    color: var(--theme-text);
+  }
+
+  .text-theme-primary {
+    color: var(--theme-primary);
+  }
+
+  .border-theme-secondary {
+    border-color: var(--theme-secondary);
+  }
+}
+
+@layer utilities {
+  /* Theme-specific utilities */
+  .theme-forest .bg-gray-50 {
+    background-color: #f0fdf4;
+  }
+
+  .theme-forest .dark\:bg-gray-900 {
+    background-color: #f0fdf4;
+  }
+
+  .theme-neutral .bg-gray-50 {
+    background-color: #fafafa;
+  }
+
+  .theme-neutral .dark\:bg-gray-900 {
+    background-color: #fafafa;
+  }
+
+  .theme-base .bg-gray-50 {
+    background-color: #fef2f2;
+  }
+
+  .theme-base .dark\:bg-gray-900 {
+    background-color: #fef2f2;
+  }
+}

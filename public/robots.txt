@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://aac.florian-hunter.de/sitemap.xml
