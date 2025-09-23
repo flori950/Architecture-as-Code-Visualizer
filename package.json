@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "build:analyze": "npm run build && node scripts/analyze-bundle.js",
+    "deploy:test": "node scripts/test-deployment.js",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",

@@ -1,8 +1,19 @@
 # Architecture-as-Code Visualizer
 
+[![Deployment Status](https://github.com/flori950/Architecture-as-Code-Visualizer/actions/workflows/deploy.yml/badge.svg)](https://github.com/flori950/Architecture-as-Code-Visualizer/actions/workflows/deploy.yml)
+[![CI Status](https://github.com/flori950/Architecture-as-Code-Visualizer/actions/workflows/ci.yml/badge.svg)](https://github.com/flori950/Architecture-as-Code-Visualizer/actions/workflows/ci.yml)
+![React](https://img.shields.io/badge/React-19.1.1-blue)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-blue)
+![Vite](https://img.shields.io/badge/Vite-7.1.7-green)
+![License](https://img.shields.io/badge/license-MIT-blue)
+
 A modern React-based web application that transforms Infrastructure-as-Code (IaC) configurations into interactive Mermaid diagrams. The application supports various IaC formats and provides a user-friendly interface for uploading, editing, and visualizing infrastructure configurations.
 
-![Architecture-as-Code Visualizer](https://img.shields.io/badge/React-19.1.1-blue) ![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-blue) ![Vite](https://img.shields.io/badge/Vite-7.1.2-green) ![License](https://img.shields.io/badge/license-MIT-blue)
+## 🌐 Live Demo
+
+**🔗 [Try it now!](https://your-domain.com)** - Experience the Architecture-as-Code Visualizer live
+
+> 🧪 **Staging**: [Preview upcoming features](https://staging.your-domain.com)
 
 ## 🚀 Features
 
@@ -567,7 +578,48 @@ Je nach Input-Format werden verschiedene Mermaid-Diagramm-Typen generiert:
 
 ## 🚀 Deployment
 
-### Statisches Hosting
+### Automatic FTP Deployment (GitHub Actions)
+
+This project includes automated deployment to your FTP server via GitHub Actions:
+
+**🔧 Setup Instructions:**
+
+1. **Configure FTP Secrets** in GitHub repository settings:
+
+   ```
+   FTP_SERVER     = your-ftp-server.com
+   FTP_USERNAME   = your-ftp-username
+   FTP_PASSWORD   = your-ftp-password
+   FTP_SERVER_DIR = /public_html/
+   ```
+
+2. **Set Repository Variables:**
+
+   ```
+   DEPLOYMENT_URL = https://your-domain.com
+   ```
+
+3. **Deploy automatically** on push to `main` branch!
+
+**📋 Deployment Features:**
+
+- ✅ **Automatic testing** and security audit
+- ✅ **Bundle optimization** and analysis
+- ✅ **Production & staging** environments
+- ✅ **Manual deployment** triggers
+- ✅ **Deployment verification** and reporting
+
+**🧪 Test your deployment setup:**
+
+```bash
+npm run deploy:test
+```
+
+📚 **Full setup guide**: [docs/DEPLOYMENT_SETUP.md](docs/DEPLOYMENT_SETUP.md)
+
+### Manual Hosting
+
+#### Static Hosting
 
 ```bash
 # Build für Produktion
@@ -666,33 +718,8 @@ Bei Fragen oder Problemen:
 
 **Erstellt mit ❤️ für die DevOps-Community**
 
-Machen Sie Ihre Infrastructure-as-Code visuell verständlich und fördern Sie bessere Zusammenarbeit in Ihrem Team!
+---
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+**🎯 Make your Infrastructure-as-Code visually understandable and promote better collaboration in your team!**
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x';
-import reactDom from 'eslint-plugin-react-dom';
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
-```
+[![Deploy Now](https://img.shields.io/badge/Deploy%20Now-🚀-success?style=for-the-badge)](https://github.com/flori950/Architecture-as-Code-Visualizer/actions/workflows/deploy.yml)
