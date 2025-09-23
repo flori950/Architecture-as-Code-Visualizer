@@ -37,6 +37,38 @@ describe('mermaidGenerator', () => {
       expect(result.diagramType).toBe('flowchart');
     });
 
+    it('should handle Docker Compose with null network/volume configs', () => {
+      const parsedData: ParsedData = {
+        format: 'docker-compose',
+        originalContent: '',
+        data: {
+          version: '3.8',
+          services: {
+            web: {
+              image: 'nginx:alpine',
+              networks: ['frontend'],
+            },
+          },
+          networks: {
+            frontend: null, // This can happen in Docker Compose files
+          },
+          volumes: {
+            data: null, // This can also happen
+          },
+        },
+      };
+
+      const result = generateMermaidDiagram(parsedData);
+
+      expect(result.success).toBe(true);
+      expect(result.mermaidCode).toContain('flowchart TD');
+      expect(result.mermaidCode).toContain('frontend');
+      expect(result.mermaidCode).toContain('Driver: bridge'); // Should default to bridge
+      expect(result.mermaidCode).toContain('data');
+      expect(result.mermaidCode).toContain('Driver: local'); // Should default to local
+      expect(result.diagramType).toBe('flowchart');
+    });
+
     it('should generate Kubernetes diagram', () => {
       const parsedData: ParsedData = {
         format: 'kubernetes',
@@ -54,10 +86,10 @@ describe('mermaidGenerator', () => {
       const result = generateMermaidDiagram(parsedData);
 
       expect(result.success).toBe(true);
-      expect(result.mermaidCode).toContain('graph TD');
+      expect(result.mermaidCode).toContain('flowchart TD');
       expect(result.mermaidCode).toContain('Deployment');
       expect(result.mermaidCode).toContain('web-app');
-      expect(result.diagramType).toBe('graph');
+      expect(result.diagramType).toBe('flowchart');
     });
 
     it('should generate Terraform diagram', () => {
