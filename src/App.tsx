@@ -4,7 +4,7 @@ import { Settings, Moon, Sun, Github, FileText, Zap } from 'lucide-react';
 // Components
 import FileUpload from './components/FileUpload';
 import YamlEditor from './components/YamlEditor';
-import DiagramViewer from './components/DiagramViewer';
+import LazyDiagramViewer from './components/LazyDiagramViewer';
 import ExportButtons from './components/ExportButtons';
 import ThemeSelector from './components/ThemeSelector';
 import { Examples } from './components/Examples';
@@ -314,7 +314,7 @@ ${mermaidCode}`;
           <div className="flex flex-col gap-6">
             {/* Diagram viewer */}
             <div className="card min-h-[500px]">
-              <DiagramViewer
+              <LazyDiagramViewer
                 mermaidCode={mermaidCode}
                 theme={currentTheme}
                 isLoading={isGenerating}
