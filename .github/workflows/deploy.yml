@@ -191,7 +191,7 @@ jobs:
         echo "::endgroup::"
 
     - name: 🚀 Deploy to Production FTP
-      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.6
       with:
         server: ${{ secrets.FTP_SERVER }}
         username: ${{ secrets.FTP_USERNAME }}
@@ -289,7 +289,7 @@ jobs:
         echo "::endgroup::"
 
     - name: 🧪 Deploy to Staging FTP
-      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.6
       with:
         server: ${{ secrets.STAGING_FTP_SERVER || secrets.FTP_SERVER }}
         username: ${{ secrets.STAGING_FTP_USERNAME || secrets.FTP_USERNAME }}
