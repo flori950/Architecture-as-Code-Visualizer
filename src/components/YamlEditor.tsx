@@ -11,28 +11,30 @@ const YamlEditor: React.FC<YamlEditorProps> = ({
   readOnly = false,
 }) => {
   const [localContent, setLocalContent] = useState(content);
-  const [detectedFormat, setDetectedFormat] = useState<string>('');
   const [isEditing, setIsEditing] = useState(false);
+  const [prevContent, setPrevContent] = useState(content);
 
-  // Detect format when content changes
-  useEffect(() => {
+  // Detect format when content changes - use useMemo instead of effect
+  const detectedFormat = React.useMemo(() => {
     if (localContent.trim()) {
       const format = detectFormat(localContent);
-      setDetectedFormat(format);
-      if (onFormatDetected) {
-        onFormatDetected(format);
-      }
-    } else {
-      setDetectedFormat('');
+      return format;
     }
-  }, [localContent, onFormatDetected]);
+    return '';
+  }, [localContent]);
 
-  // Sync with external content changes
+  // Notify parent of format changes
   useEffect(() => {
-    if (!isEditing) {
-      setLocalContent(content);
+    if (onFormatDetected && detectedFormat) {
+      onFormatDetected(detectedFormat);
     }
-  }, [content, isEditing]);
+  }, [detectedFormat, onFormatDetected]);
+
+  // Sync with external content changes - use derived state pattern
+  if (!isEditing && content !== prevContent) {
+    setPrevContent(content);
+    setLocalContent(content);
+  }
 
   const handleContentChange = useCallback(
     (newContent: string) => {
