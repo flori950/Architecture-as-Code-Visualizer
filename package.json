@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "js-yaml": "^4.1.1",
-    "lucide-react": "^0.544.0",
+    "lucide-react": "^0.556.0",
     "mermaid": "^11.12.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
