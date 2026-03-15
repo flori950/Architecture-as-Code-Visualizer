@@ -161,7 +161,7 @@ jobs:
     if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
     environment: 
       name: production
-      url: ${{ vars.DEPLOYMENT_URL || 'https://your-domain.com' }}
+      url: ${{ vars.DEPLOYMENT_URL || 'https://aac.florian-hunter.de/' }}
     
     steps:
     - name: 📥 Download build artifacts
@@ -190,7 +190,19 @@ jobs:
         echo "Total deployment size: $(du -sh ./deploy | cut -f1)"
         echo "::endgroup::"
 
-    - name: 🚀 Deploy to Production FTP
+    - name: 🧹 Clean remote directory (delete all old files)
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        script: |
+          echo "Cleaning remote directory..."
+          rm -rf /aac/*
+          mkdir -p /aac/
+          echo "✅ Remote directory cleaned"
+
+    - name: 🚀 Deploy to Production FTP (clean)
       uses: SamKirkland/FTP-Deploy-Action@v4.3.6
       with:
         server: ${{ secrets.FTP_SERVER }}
@@ -223,7 +235,7 @@ jobs:
       run: |
         echo "::group::Deployment Verification"
         echo "✅ Deployment completed successfully!"
-        echo "🌐 Production URL: ${{ vars.DEPLOYMENT_URL || 'https://your-domain.com' }}"
+        echo "🌐 Production URL: ${{ vars.DEPLOYMENT_URL || 'https://aac.florian-hunter.de/' }}"
         echo "📊 Deployment completed at: $(date -u)"
         echo "::endgroup::"
 
@@ -234,7 +246,7 @@ jobs:
         echo "## 🌐 Live Site" >> $GITHUB_STEP_SUMMARY
         echo "Your **Architecture-as-Code Visualizer** is now live!" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**🔗 [${{ vars.DEPLOYMENT_URL || 'https://your-domain.com' }}](${{ vars.DEPLOYMENT_URL || 'https://your-domain.com' }})**" >> $GITHUB_STEP_SUMMARY
+        echo "**🔗 [${{ vars.DEPLOYMENT_URL || 'https://aac.florian-hunter.de/' }}](${{ vars.DEPLOYMENT_URL || 'https://aac.florian-hunter.de/' }})**" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "## 📊 Deployment Details" >> $GITHUB_STEP_SUMMARY
         echo "- **Deployed at**: \`$(date -u)\`" >> $GITHUB_STEP_SUMMARY
@@ -262,7 +274,7 @@ jobs:
     if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
     environment: 
       name: staging
-      url: ${{ vars.STAGING_URL || 'https://staging.your-domain.com' }}
+      url: ${{ vars.STAGING_URL || 'https://staging.aac.florian-hunter.de/' }}
     
     steps:
     - name: 📥 Download build artifacts
@@ -288,7 +300,19 @@ jobs:
         echo "Staging deployment prepared"
         echo "::endgroup::"
 
-    - name: 🧪 Deploy to Staging FTP
+    - name: � Clean remote staging directory
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.STAGING_FTP_SERVER || secrets.FTP_SERVER }}
+        username: ${{ secrets.STAGING_FTP_USERNAME || secrets.FTP_USERNAME }}
+        password: ${{ secrets.STAGING_FTP_PASSWORD || secrets.FTP_PASSWORD }}
+        script: |
+          echo "Cleaning remote staging directory..."
+          rm -rf /aac-staging/*
+          mkdir -p /aac-staging/
+          echo "✅ Remote staging directory cleaned"
+
+    - name: 🧪 Deploy to Staging FTP (clean)
       uses: SamKirkland/FTP-Deploy-Action@v4.3.6
       with:
         server: ${{ secrets.STAGING_FTP_SERVER || secrets.FTP_SERVER }}
@@ -312,7 +336,7 @@ jobs:
         echo "# 🧪 Staging Deployment Complete!" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "## 🔗 Staging Environment" >> $GITHUB_STEP_SUMMARY
-        echo "**[${{ vars.STAGING_URL || 'https://staging.your-domain.com' }}](${{ vars.STAGING_URL || 'https://staging.your-domain.com' }})**" >> $GITHUB_STEP_SUMMARY
+        echo "**[${{ vars.STAGING_URL || 'https://staging.aac.florian-hunter.de/' }}](${{ vars.STAGING_URL || 'https://staging.aac.florian-hunter.de/' }})**" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "🧪 This is a staging deployment for testing purposes." >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
