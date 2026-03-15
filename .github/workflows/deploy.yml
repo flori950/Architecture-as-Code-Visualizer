@@ -190,20 +190,31 @@ jobs:
         echo "Total deployment size: $(du -sh ./deploy | cut -f1)"
         echo "::endgroup::"
 
-    - name: 🧹 Clean remote directory with lftp
+    - name: Delete sync state to force full re-upload
       run: |
-        echo "::group::Cleaning remote directory"
-        lftp -e "
-        set ftp:ssl-allow no
-        open -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ${{ secrets.FTP_SERVER }}
+        echo "::group::Preparing fresh deployment"
+        # Create FTP commands to delete sync state and all files
+        cat > /tmp/ftp-commands.txt << 'EOF'
+        open -u ${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }} ${{ secrets.FTP_SERVER }}
         cd /aac/
-        rm -r *
+        delete .ftp-deploy-sync-state.json
+        mdelete *.html
+        mdelete *.js
+        mdelete *.css
+        mdelete *.svg
+        mdelete *.json
+        mdelete *.txt
+        mdelete *.xml
+        mdelete *.map
         bye
-        " 2>&1 || echo "Note: Clean command may not be critical"
-        echo "✅ Remote directory cleaned"
+        EOF
+        
+        # Execute FTP commands
+        ftp -n -v -i < /tmp/ftp-commands.txt 2>&1 || echo "Note: FTP cleanup attempted"
+        echo "Preparing for fresh deployment"
         echo "::endgroup::"
 
-    - name: 🚀 Deploy to Production FTP (fresh upload)
+    - name: Deploy to Production FTP (fresh upload)
       uses: SamKirkland/FTP-Deploy-Action@v4.3.6
       with:
         server: ${{ secrets.FTP_SERVER }}
@@ -267,79 +278,4 @@ jobs:
       run: |
         echo "::notice title=🚀 Production Deployment Success::Architecture-as-Code Visualizer deployed successfully to ${{ vars.DEPLOYMENT_URL || 'production server' }}"
 
-  # Staging Deploy Job
-  deploy-staging:
-    name: 🧪 Deploy to Staging
-    runs-on: ubuntu-latest
-    needs: build-and-test
-    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
-    environment: 
-      name: staging
-      url: ${{ vars.STAGING_URL || 'https://staging.aac.florian-hunter.de/' }}
-    
-    steps:
-    - name: 📥 Download build artifacts
-      uses: actions/download-artifact@v5
-      with:
-        name: build-artifacts-${{ github.sha }}
-        path: ./artifacts
-
-    - name: 📂 Prepare staging deployment
-      run: |
-        echo "::group::Preparing staging deployment"
-        mkdir -p ./deploy
-        cp -r ./artifacts/dist/* ./deploy/
-        
-        # Add staging environment indicator
-        echo "<!-- STAGING ENVIRONMENT -->" >> ./deploy/index.html
-        echo "<!-- Deployed: $(date -u) -->" >> ./deploy/index.html
-        echo "<!-- PR #${{ github.event.number || 'N/A' }} -->" >> ./deploy/index.html
-        
-        # Modify title to indicate staging
-        sed -i 's/<title>/<title>[STAGING] /' ./deploy/index.html
-        
-        echo "Staging deployment prepared"
-        echo "::endgroup::"
-
-    - name: Clean remote staging directory with lftp
-      run: |
-        echo "::group::Cleaning remote staging directory"
-        lftp -e "
-        set ftp:ssl-allow no
-        open -u ${{ secrets.STAGING_FTP_USERNAME || secrets.FTP_USERNAME }},${{ secrets.STAGING_FTP_PASSWORD || secrets.FTP_PASSWORD }} ${{ secrets.STAGING_FTP_SERVER || secrets.FTP_SERVER }}
-        cd /aac-staging/
-        rm -r *
-        bye
-        " 2>&1 || echo "Note: Clean command may not be critical"
-        echo "Remote staging directory cleaned"
-        echo "::endgroup::"
-
-    - name: Deploy to Staging FTP (fresh upload)
-      uses: SamKirkland/FTP-Deploy-Action@v4.3.6
-      with:
-        server: ${{ secrets.STAGING_FTP_SERVER || secrets.FTP_SERVER }}
-        username: ${{ secrets.STAGING_FTP_USERNAME || secrets.FTP_USERNAME }}
-        password: ${{ secrets.STAGING_FTP_PASSWORD || secrets.FTP_PASSWORD }}
-        local-dir: ./deploy/
-        server-dir: /aac-staging/
-        exclude: |
-          **/.git*
-          **/.git*/**
-          **/node_modules/**
-          **/.DS_Store
-          **/Thumbs.db
-          **/*.log
-          **/.env*
-        dry-run: false
-        log-level: verbose
-
-    - name: 🧪 Staging deployment summary
-      run: |
-        echo "# 🧪 Staging Deployment Complete!" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "## 🔗 Staging Environment" >> $GITHUB_STEP_SUMMARY
-        echo "**[${{ vars.STAGING_URL || 'https://staging.aac.florian-hunter.de/' }}](${{ vars.STAGING_URL || 'https://staging.aac.florian-hunter.de/' }})**" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "🧪 This is a staging deployment for testing purposes." >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**PR**: #${{ github.event.number || 'Manual deployment' }}" >> $GITHUB_STEP_SUMMARY
+ 
