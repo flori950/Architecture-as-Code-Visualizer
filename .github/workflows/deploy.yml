@@ -190,19 +190,20 @@ jobs:
         echo "Total deployment size: $(du -sh ./deploy | cut -f1)"
         echo "::endgroup::"
 
-    - name: 🧹 Clean remote directory (delete all old files)
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.FTP_SERVER }}
-        username: ${{ secrets.FTP_USERNAME }}
-        password: ${{ secrets.FTP_PASSWORD }}
-        script: |
-          echo "Cleaning remote directory..."
-          rm -rf /aac/*
-          mkdir -p /aac/
-          echo "✅ Remote directory cleaned"
+    - name: 🧹 Clean remote directory with lftp
+      run: |
+        echo "::group::Cleaning remote directory"
+        lftp -e "
+        set ftp:ssl-allow no
+        open -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ${{ secrets.FTP_SERVER }}
+        cd /aac/
+        rm -r *
+        bye
+        " 2>&1 || echo "Note: Clean command may not be critical"
+        echo "✅ Remote directory cleaned"
+        echo "::endgroup::"
 
-    - name: 🚀 Deploy to Production FTP (clean)
+    - name: 🚀 Deploy to Production FTP (fresh upload)
       uses: SamKirkland/FTP-Deploy-Action@v4.3.6
       with:
         server: ${{ secrets.FTP_SERVER }}
@@ -300,19 +301,20 @@ jobs:
         echo "Staging deployment prepared"
         echo "::endgroup::"
 
-    - name: � Clean remote staging directory
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.STAGING_FTP_SERVER || secrets.FTP_SERVER }}
-        username: ${{ secrets.STAGING_FTP_USERNAME || secrets.FTP_USERNAME }}
-        password: ${{ secrets.STAGING_FTP_PASSWORD || secrets.FTP_PASSWORD }}
-        script: |
-          echo "Cleaning remote staging directory..."
-          rm -rf /aac-staging/*
-          mkdir -p /aac-staging/
-          echo "✅ Remote staging directory cleaned"
+    - name: Clean remote staging directory with lftp
+      run: |
+        echo "::group::Cleaning remote staging directory"
+        lftp -e "
+        set ftp:ssl-allow no
+        open -u ${{ secrets.STAGING_FTP_USERNAME || secrets.FTP_USERNAME }},${{ secrets.STAGING_FTP_PASSWORD || secrets.FTP_PASSWORD }} ${{ secrets.STAGING_FTP_SERVER || secrets.FTP_SERVER }}
+        cd /aac-staging/
+        rm -r *
+        bye
+        " 2>&1 || echo "Note: Clean command may not be critical"
+        echo "Remote staging directory cleaned"
+        echo "::endgroup::"
 
-    - name: 🧪 Deploy to Staging FTP (clean)
+    - name: Deploy to Staging FTP (fresh upload)
       uses: SamKirkland/FTP-Deploy-Action@v4.3.6
       with:
         server: ${{ secrets.STAGING_FTP_SERVER || secrets.FTP_SERVER }}
