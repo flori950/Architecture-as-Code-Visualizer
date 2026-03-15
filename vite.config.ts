@@ -17,59 +17,10 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: id => {
-          // React and core libraries
-          if (id.includes('react') || id.includes('react-dom')) {
-            return 'react-vendor';
-          }
-
-          // Mermaid core (largest library) - split more aggressively
-          if (id.includes('mermaid')) {
-            // Core mermaid engine
-            if (
-              id.includes('mermaid/dist/mermaid.esm') ||
-              id.includes('mermaidAPI')
-            ) {
-              return 'mermaid-core';
-            }
-            // Diagram parsers and renderers
-            if (id.includes('diagram') || id.includes('parser')) {
-              return 'mermaid-diagrams';
-            }
-            // Other mermaid utilities
-            return 'mermaid-utils';
-          }
-
-          // Utility libraries
-          if (id.includes('js-yaml')) {
-            return 'yaml-utils';
-          }
-
-          // Icon library
-          if (id.includes('lucide-react')) {
-            return 'icons';
-          }
-
-          // D3 and graph libraries (often used by mermaid)
-          if (
-            id.includes('d3-') ||
-            id.includes('dagre') ||
-            id.includes('graphlib')
-          ) {
-            return 'graph-libs';
-          }
-
-          // Split other large node_modules
-          if (id.includes('node_modules')) {
-            // Group similar libraries together
-            if (id.includes('monaco-editor')) {
-              return 'monaco-vendor';
-            }
-            if (id.includes('@codemirror') || id.includes('codemirror')) {
-              return 'codemirror-vendor';
-            }
-            return 'vendor';
-          }
+        manualChunks: {
+          // Only split the truly large/heavy libraries
+          vue: ['mermaid'], // Mermaid as its own chunk (it's large)
+          'react-vendor': ['react', 'react-dom'], // React as its own chunk
         },
         // Create smaller chunks for better caching
         chunkFileNames: chunkInfo => {
