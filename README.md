@@ -1,21 +1,8 @@
 # Architecture-as-Code Visualizer
 
-[![Deployment Status](https://github.com/flori950/Architecture-as-Code-Visualizer/actions/workflows/deploy.yml/badge.svg)](https://github.com/flori950/Architecture-as-Code-Visualizer/actions/workflows/deploy.yml)
-[![CI Status](https://github.com/flori950/Architecture-as-Code-Visualizer/actions/workflows/ci.yml/badge.svg)](https://github.com/flori950/Architecture-as-Code-Visualizer/actions/workflows/ci.yml)
-![React](https://img.shields.io/badge/React-19.1.1-blue)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-blue)
-![Vite](https://img.shields.io/badge/Vite-7.1.7-green)
-![License](https://img.shields.io/badge/license-MIT-blue)
+A modern React-based web application that transforms Infrastructure-as-Code (IaC) configurations into interactive Mermaid diagrams.
 
-A modern React-based web application that transforms Infrastructure-as-Code (IaC) configurations into interactive Mermaid diagrams. The application supports various IaC formats and provides a user-friendly interface for uploading, editing, and visualizing infrastructure configurations.
-
-## 🌐 Live Demo
-
-**🔗 [Try it now!](https://your-domain.com)** - Experience the Architecture-as-Code Visualizer live
-
-> 🧪 **Staging**: [Preview upcoming features](https://staging.your-domain.com)
-
-## 🚀 Features
+## Features
 
 ### Supported Formats
 
